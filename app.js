@@ -19,7 +19,8 @@ const state = {
     favorite: "all"
   },
   selectedGeneratorIds: [],
-  generatedDraft: null
+  generatedDraft: null,
+  lastGeneratedIdea: ""
 };
 
 const els = {
@@ -42,7 +43,11 @@ const els = {
   sortBy: document.getElementById("sortBy"),
   gridViewBtn: document.getElementById("gridViewBtn"),
   listViewBtn: document.getElementById("listViewBtn"),
+  generatorDropdownBtn: document.getElementById("generatorDropdownBtn"),
+  generatorDropdownMenu: document.getElementById("generatorDropdownMenu"),
   generatorPolishList: document.getElementById("generatorPolishList"),
+  generatorSelectedChips: document.getElementById("generatorSelectedChips"),
+  generatorSelectionSummary: document.getElementById("generatorSelectionSummary"),
   autoSuggestBtn: document.getElementById("autoSuggestBtn"),
   generateDesignBtn: document.getElementById("generateDesignBtn"),
   generatedDesign: document.getElementById("generatedDesign"),
@@ -464,31 +469,129 @@ function renderGeneratorList() {
   if (!els.generatorPolishList) return;
   if (!state.polishes.length) {
     els.generatorPolishList.innerHTML = `<p class="muted">Add polishes to start generating ideas.</p>`;
+    if (els.generatorDropdownBtn) {
+      els.generatorDropdownBtn.disabled = true;
+      els.generatorDropdownBtn.textContent = "No polishes available";
+    }
+    renderGeneratorSelectedChips();
+    updateGeneratorSelectionSummary(0, 0);
     return;
   }
 
+  const validIds = new Set(state.polishes.map((polish) => polish.id));
+  state.selectedGeneratorIds = state.selectedGeneratorIds.filter((idValue) => validIds.has(idValue));
+  if (els.generatorDropdownBtn) {
+    els.generatorDropdownBtn.disabled = false;
+  }
   els.generatorPolishList.innerHTML = state.polishes
     .map(
       (polish) => `
-      <label class="generator-check">
-        <input type="checkbox" value="${polish.id}" ${state.selectedGeneratorIds.includes(polish.id) ? "checked" : ""} />
-        <span>${polish.name} (${polish.finish})</span>
+      <label class="generator-option" role="option" aria-selected="${state.selectedGeneratorIds.includes(polish.id) ? "true" : "false"}">
+        <input class="generator-option-input" type="checkbox" value="${polish.id}" ${state.selectedGeneratorIds.includes(polish.id) ? "checked" : ""} />
+        <span class="generator-option-text">${polish.name} - ${polish.brand} (${polish.finish})</span>
       </label>
     `
     )
     .join("");
 
-  els.generatorPolishList.querySelectorAll("input[type='checkbox']").forEach((checkbox) => {
-    checkbox.addEventListener("change", (event) => {
-      const selected = Array.from(els.generatorPolishList.querySelectorAll("input[type='checkbox']:checked"))
-        .map((node) => node.value)
-        .slice(0, 3);
-      state.selectedGeneratorIds = selected;
-      if (!selected.includes(event.target.value)) {
-        event.target.checked = false;
+  updateGeneratorSelectionSummary(state.selectedGeneratorIds.length, state.polishes.length);
+  updateGeneratorDropdownLabel();
+  renderGeneratorSelectedChips();
+}
+
+function renderGeneratorSelectedChips() {
+  if (!els.generatorSelectedChips) return;
+  const selectedPolishes = state.selectedGeneratorIds
+    .map((idValue) => state.polishes.find((polish) => polish.id === idValue))
+    .filter(Boolean);
+
+  if (!selectedPolishes.length) {
+    els.generatorSelectedChips.innerHTML = `<span class="generator-chip generator-chip-placeholder">Selected polishes will appear here.</span>`;
+    return;
+  }
+
+  els.generatorSelectedChips.innerHTML = selectedPolishes
+    .map(
+      (polish) => `
+      <span class="generator-chip">
+        <span class="generator-chip-swatch" style="background:${polish.color}" aria-hidden="true"></span>
+        <span class="generator-chip-text">${polish.name}</span>
+        <button class="generator-chip-remove" type="button" data-polish-id="${polish.id}" aria-label="Remove ${polish.name} from selection">×</button>
+      </span>
+    `
+    )
+    .join("");
+
+  els.generatorSelectedChips.querySelectorAll(".generator-chip-remove").forEach((button) => {
+    button.addEventListener("click", () => {
+      const polishId = button.getAttribute("data-polish-id");
+      if (!polishId) return;
+      state.selectedGeneratorIds = state.selectedGeneratorIds.filter((idValue) => idValue !== polishId);
+
+      const input = els.generatorPolishList?.querySelector(`input[value="${polishId}"]`);
+      if (input) {
+        input.checked = false;
       }
+
+      syncGeneratorSelection();
     });
   });
+}
+
+function updateGeneratorDropdownLabel() {
+  if (!els.generatorDropdownBtn) return;
+  const count = state.selectedGeneratorIds.length;
+  if (!state.polishes.length) {
+    els.generatorDropdownBtn.textContent = "No polishes available";
+    return;
+  }
+
+  if (!count) {
+    els.generatorDropdownBtn.textContent = "Select polishes";
+    return;
+  }
+
+  if (count === 1) {
+    const match = state.polishes.find((polish) => polish.id === state.selectedGeneratorIds[0]);
+    els.generatorDropdownBtn.textContent = match ? match.name : "1 polish selected";
+    return;
+  }
+
+  els.generatorDropdownBtn.textContent = `${count} polishes selected`;
+}
+
+function setGeneratorDropdownOpen(isOpen) {
+  if (!els.generatorDropdownBtn || !els.generatorDropdownMenu) return;
+  els.generatorDropdownBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  els.generatorDropdownMenu.hidden = !isOpen;
+}
+
+function updateGeneratorSelectionSummary(selectedCount, totalCount) {
+  if (!els.generatorSelectionSummary) return;
+  if (!totalCount) {
+    els.generatorSelectionSummary.textContent = "No polishes available yet.";
+    return;
+  }
+
+  if (!selectedCount) {
+    els.generatorSelectionSummary.textContent = "No polishes selected yet. The generator will use your full collection until you choose some.";
+    return;
+  }
+
+  const noun = selectedCount === 1 ? "polish" : "polishes";
+  els.generatorSelectionSummary.textContent = `${selectedCount} ${noun} selected from ${totalCount}. Each generated idea can use a smaller mix from this pool.`;
+}
+
+function syncGeneratorSelection() {
+  if (!els.generatorPolishList) return;
+  state.selectedGeneratorIds = Array.from(els.generatorPolishList.querySelectorAll("input:checked")).map((input) => input.value);
+  els.generatorPolishList.querySelectorAll(".generator-option").forEach((option) => {
+    const input = option.querySelector("input");
+    option.setAttribute("aria-selected", input.checked ? "true" : "false");
+  });
+  updateGeneratorSelectionSummary(state.selectedGeneratorIds.length, state.polishes.length);
+  updateGeneratorDropdownLabel();
+  renderGeneratorSelectedChips();
 }
 
 function colorRelationship(polishes) {
@@ -497,7 +600,7 @@ function colorRelationship(polishes) {
   const spread = hues[hues.length - 1] - hues[0];
   if (spread > 140 && spread < 220) return "complementary contrast";
   if (spread <= 28) return "monochrome layering";
-  return "analog color flow";
+  return "soft color blend";
 }
 
 function finishMix(polishes) {
@@ -508,46 +611,124 @@ function finishMix(polishes) {
   return `mixed finish energy (${unique.join(", ")})`;
 }
 
+function shuffle(items) {
+  const copy = [...items];
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+  }
+  return copy;
+}
+
+function randomItem(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function choosePalette(pool) {
+  const shuffled = shuffle(pool);
+  const maxCount = Math.min(shuffled.length, 4);
+  const minCount = Math.min(maxCount, shuffled.length === 1 ? 1 : 2);
+  const count = minCount + Math.floor(Math.random() * (maxCount - minCount + 1));
+  return shuffled.slice(0, count);
+}
+
+function buildDesignDraft(pool) {
+  const polishes = choosePalette(pool);
+  const relationship = colorRelationship(polishes);
+  const texture = finishMix(polishes);
+  const featured = polishes[0];
+  const detailShade = polishes[1] || featured;
+  const accentShade = polishes[polishes.length - 1];
+  const basePlacements = ["as the base", "across most nails", "for a glossy full set", "on every nail except the accent"];
+  const detailPlacements = [
+    "add slim side-swept lines",
+    "paint a curved French tip",
+    "layer a negative-space half moon",
+    "trace a ribbon-like stripe"
+  ];
+  const accentIdeas = [
+    "a checker accent nail",
+    "a tiny starburst cluster",
+    "a soft aura blend",
+    "a bold geometric block"
+  ];
+  const finishNotes = [
+    "Keep the shape short and glossy for an easy everyday version.",
+    "Leave one nail quieter so the contrast reads cleaner.",
+    "Finish with extra shine so the color shift feels intentional.",
+    "Lean into negative space to keep the palette from feeling heavy."
+  ];
+
+  const basePlacement = randomItem(basePlacements);
+  const detailPlacement = randomItem(detailPlacements);
+  const accentIdea = randomItem(accentIdeas);
+  const finishNote = randomItem(finishNotes);
+  const extraNames = polishes.slice(2).map((polish) => polish.name);
+  const extraPhrase = extraNames.length ? ` Pull in ${extraNames.join(" and ")} for tiny finishing details.` : "";
+
+  const description = `Build a ${relationship} look with ${texture}. Use ${featured.name} ${basePlacement}, ${detailPlacement} with ${detailShade.name}, and make the accent nail all about ${accentShade.name} with ${accentIdea}.${extraPhrase} ${finishNote}`;
+
+  return {
+    signature: `${polishes.map((polish) => polish.id).join("|")}::${basePlacement}::${detailPlacement}::${accentIdea}::${finishNote}`,
+    polishes,
+    description
+  };
+}
+
 function generateDesign() {
   if (!els.generatedDesign) return;
-  const chosen = state.polishes.filter((p) => state.selectedGeneratorIds.includes(p.id));
-  const polishes = chosen.length ? chosen : state.polishes.slice(0, 3);
+  const selectedSet = new Set(state.selectedGeneratorIds);
+  const chosen = state.polishes.filter((p) => selectedSet.has(p.id));
+  const pool = chosen.length ? chosen : state.polishes;
 
-  if (!polishes.length) {
+  if (!pool.length) {
     els.generatedDesign.innerHTML = `<p class="muted">You need at least one polish first.</p>`;
     return;
   }
 
-  const relationship = colorRelationship(polishes);
-  const texture = finishMix(polishes);
-  const featured = polishes[0];
-
-  const description = `Build a ${relationship} look with ${texture}. Use ${featured.name} as the base, then add thin diagonal details with ${polishes
-    .slice(1)
-    .map((p) => p.name)
-    .join(" and ") || "a matching topper"}. Finish with one accent nail featuring a bold shape.`;
+  let draft = buildDesignDraft(pool);
+  let attempts = 0;
+  while (draft.signature === state.lastGeneratedIdea && attempts < 8) {
+    draft = buildDesignDraft(pool);
+    attempts += 1;
+  }
+  state.lastGeneratedIdea = draft.signature;
 
   state.generatedDraft = {
     id: id(),
     createdAt: new Date().toISOString(),
-    polishIds: polishes.map((p) => p.id),
-    description,
+    polishIds: draft.polishes.map((p) => p.id),
+    description: draft.description,
     tried: false
   };
 
   els.generatedDesign.innerHTML = `
     <h3>Generated Idea</h3>
-    <p>${description}</p>
-    <div class="design-palette">${polishes
+    <p>${draft.description}</p>
+    <p class="muted">Using ${draft.polishes.length} of ${pool.length} available ${pool.length === 1 ? "polish" : "polishes"} in your current pool.</p>
+    <div class="design-palette">${draft.polishes
       .map((p) => `<span class="design-dot" style="background:${p.color}" title="${p.name}"></span>`)
       .join("")}</div>
-    <button class="btn btn-primary" id="saveDesignBtn" type="button">Save Design</button>
+    <div class="design-save-row">
+      <button class="btn btn-primary" id="saveDesignBtn" type="button">Save Design</button>
+      <span class="design-save-status" id="saveDesignStatus" aria-live="polite"></span>
+    </div>
   `;
 
   document.getElementById("saveDesignBtn").addEventListener("click", () => {
     if (!state.generatedDraft) return;
     state.designs.unshift(state.generatedDraft);
     state.generatedDraft = null;
+    const saveButton = document.getElementById("saveDesignBtn");
+    const saveStatus = document.getElementById("saveDesignStatus");
+    if (saveButton) {
+      saveButton.textContent = "Saved";
+      saveButton.disabled = true;
+      saveButton.classList.add("btn-saved");
+    }
+    if (saveStatus) {
+      saveStatus.textContent = "Design saved to your library.";
+    }
     persist();
     refresh();
   });
@@ -556,7 +737,7 @@ function generateDesign() {
 function suggestPolishes() {
   const picks = [...state.polishes]
     .sort((a, b) => a.uses - b.uses || new Date(b.datePurchased).getTime() - new Date(a.datePurchased).getTime())
-    .slice(0, 3)
+    .slice(0, Math.min(4, state.polishes.length))
     .map((p) => p.id);
   state.selectedGeneratorIds = picks;
   renderGeneratorList();
@@ -586,6 +767,45 @@ function polishNames(ids) {
     .join(", ");
 }
 
+function designTitle(design) {
+  if (design.name) return design.name;
+
+  const polishes = design.polishIds
+    .map((idValue) => state.polishes.find((polish) => polish.id === idValue))
+    .filter(Boolean);
+
+  if (!polishes.length) return "Custom Nail Look";
+  if (polishes.length === 1) return `${polishes[0].name} Signature Set`;
+
+  const lead = polishes[0].name;
+  const accent = polishes[1].name;
+  return `${lead} + ${accent} Studio Look`;
+}
+
+function designSwatches(ids) {
+  return ids
+    .map((idValue) => state.polishes.find((polish) => polish.id === idValue))
+    .filter(Boolean)
+    .map(
+      (polish) => `<span class="design-dot" style="background:${polish.color}" title="${polish.name}"></span>`
+    )
+    .join("");
+}
+
+function designImageMarkup(design) {
+  if (!design.imageUrl) return "";
+  return `<div class="design-image-wrap"><img src="${design.imageUrl}" alt="${designTitle(design)}" class="design-image" /></div>`;
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Unable to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
 function renderDesignLibrary() {
   if (!els.designLibrary) return;
   const items = filteredDesigns();
@@ -598,11 +818,33 @@ function renderDesignLibrary() {
     .map(
       (design) => `
       <article class="design-card" role="listitem">
-        <h3>${design.tried ? "Tried" : "Not Tried"}</h3>
+        <div class="design-card-head">
+          <h3>${designTitle(design)}</h3>
+          <span class="design-status-badge ${design.tried ? "is-tried" : "is-untried"}">${design.tried ? "Tried" : "Not Tried"}</span>
+        </div>
+        <div class="design-card-swatches">${designSwatches(design.polishIds)}</div>
+        ${designImageMarkup(design)}
         <p>${design.description}</p>
         <p><strong>Polishes:</strong> ${polishNames(design.polishIds)}</p>
         <p><strong>Saved:</strong> ${formatDate(design.createdAt)}</p>
-        <div class="inline-controls">
+        <div class="design-image-editor">
+          <div class="inline-controls design-image-actions">
+            <button class="btn btn-secondary small" data-action="toggle-image-upload" data-id="${design.id}" type="button">${design.imageUrl ? "Update Image" : "Add Image"}</button>
+            <button class="btn btn-secondary small" data-action="clear-image" data-id="${design.id}" type="button" ${design.imageUrl ? "" : "disabled"}>Remove Image</button>
+          </div>
+          <div class="design-upload-panel" data-role="design-upload-panel" hidden>
+            <label class="design-upload-label">
+              Upload Image
+              <input type="file" data-role="design-image-file" accept="image/*" />
+            </label>
+            <div class="inline-controls design-upload-actions">
+              <button class="btn btn-secondary small" data-action="save-image" data-id="${design.id}" type="button">Save Upload</button>
+              <button class="btn btn-secondary small" data-action="cancel-image-upload" data-id="${design.id}" type="button">Cancel</button>
+            </div>
+            <p class="design-upload-status muted" data-role="design-image-status"></p>
+          </div>
+        </div>
+        <div class="inline-controls design-card-actions">
           <button class="btn btn-secondary small" data-action="toggle" data-id="${design.id}" type="button">Mark as ${
             design.tried ? "Not Tried" : "Tried"
           }</button>
@@ -614,13 +856,68 @@ function renderDesignLibrary() {
     .join("");
 
   els.designLibrary.querySelectorAll("button[data-action]").forEach((button) => {
-    button.addEventListener("click", (event) => {
+    button.addEventListener("click", async (event) => {
       const designId = event.currentTarget.getAttribute("data-id");
       const action = event.currentTarget.getAttribute("data-action");
+      const match = state.designs.find((design) => design.id === designId);
+      const card = event.currentTarget.closest(".design-card");
+
+      if (action === "toggle-image-upload") {
+        const panel = card?.querySelector("[data-role='design-upload-panel']");
+        const status = card?.querySelector("[data-role='design-image-status']");
+        if (!panel) return;
+        panel.hidden = !panel.hidden;
+        if (status) {
+          status.textContent = panel.hidden
+            ? ""
+            : "Choose an image file from your device, then save it.";
+        }
+        return;
+      }
+
+      if (action === "cancel-image-upload") {
+        const panel = card?.querySelector("[data-role='design-upload-panel']");
+        const status = card?.querySelector("[data-role='design-image-status']");
+        const input = card?.querySelector("input[data-role='design-image-file']");
+        if (input) {
+          input.value = "";
+        }
+        if (status) {
+          status.textContent = "";
+        }
+        if (panel) {
+          panel.hidden = true;
+        }
+        return;
+      }
+
       if (action === "toggle") {
-        const match = state.designs.find((d) => d.id === designId);
         if (match) {
           match.tried = !match.tried;
+        }
+      } else if (action === "save-image") {
+        const input = card?.querySelector("input[data-role='design-image-file']");
+        const status = card?.querySelector("[data-role='design-image-status']");
+        const file = input?.files?.[0];
+        if (!match || !input || !status) return;
+        if (!file) {
+          status.textContent = "Choose an image file first.";
+          return;
+        }
+        if (!file.type.startsWith("image/")) {
+          status.textContent = "Please choose an image file.";
+          return;
+        }
+        status.textContent = "Saving image...";
+        try {
+          match.imageUrl = await readFileAsDataUrl(file);
+        } catch {
+          status.textContent = "Couldn't read that image. Try another file.";
+          return;
+        }
+      } else if (action === "clear-image") {
+        if (match) {
+          match.imageUrl = "";
         }
       } else {
         state.designs = state.designs.filter((d) => d.id !== designId);
@@ -826,6 +1123,33 @@ function bindEvents() {
 
   if (els.autoSuggestBtn) {
     els.autoSuggestBtn.addEventListener("click", suggestPolishes);
+  }
+
+  if (els.generatorDropdownBtn && els.generatorDropdownMenu) {
+    els.generatorDropdownBtn.addEventListener("click", () => {
+      const isOpen = els.generatorDropdownBtn.getAttribute("aria-expanded") === "true";
+      setGeneratorDropdownOpen(!isOpen);
+    });
+
+    document.addEventListener("click", (event) => {
+      const clickedInside = event.target.closest(".generator-dropdown");
+      if (!clickedInside) {
+        setGeneratorDropdownOpen(false);
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setGeneratorDropdownOpen(false);
+      }
+    });
+  }
+
+  if (els.generatorPolishList) {
+    els.generatorPolishList.addEventListener("change", (event) => {
+      if (!event.target.matches("input[type='checkbox']")) return;
+      syncGeneratorSelection();
+    });
   }
 
   if (els.generateDesignBtn) {

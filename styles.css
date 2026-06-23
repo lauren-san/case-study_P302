@@ -516,26 +516,177 @@ button:focus-visible {
   margin: 0.35rem 0 0.7rem;
 }
 
-.generator-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.45rem;
+.generator-picker {
   margin-bottom: 0.8rem;
 }
 
-.generator-check {
+.generator-picker-label {
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.generator-dropdown {
+  position: relative;
+  width: min(100%, 360px);
+}
+
+.generator-dropdown-btn {
+  width: 100%;
+  border: 1px solid #d7e3db;
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+  background: linear-gradient(180deg, #ffffff, #f8fdf9);
+  color: var(--ink);
+  font: inherit;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+}
+
+.generator-dropdown-btn::after {
+  content: "▾";
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+}
+
+.generator-dropdown-btn:focus,
+.generator-dropdown-btn[aria-expanded="true"] {
+  outline: 2px solid rgba(41, 115, 87, 0.18);
+  outline-offset: 2px;
+  border-color: #9ab8a7;
+}
+
+.generator-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  border: 1px solid #d7e3db;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 18px 40px rgba(18, 57, 43, 0.14);
+  padding: 0.5rem;
+}
+
+.generator-options {
+  display: grid;
+  gap: 0.35rem;
+  max-height: 280px;
+  overflow-y: auto;
+  align-items: start;
+  justify-items: stretch;
+}
+
+.generator-option {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  background: #fbfdfb;
+  cursor: pointer;
+  text-align: left;
+}
+
+.generator-option[aria-selected="true"] {
+  background: #eef7f1;
+}
+
+.generator-option-input {
+  accent-color: #2f7d5a;
+  flex: 0 0 auto;
+  margin: 0;
+  justify-self: start;
+}
+
+.generator-option-text {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  justify-self: start;
+}
+
+.generator-selected-chips {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.generator-chip {
+  display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  border: 1px solid #dbe2db;
-  background: #fff;
-  border-radius: 12px;
-  padding: 0.45rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid #d7e3db;
+  border-radius: 999px;
+  background: #fbfdfb;
+  color: var(--ink);
+  font-size: 0.88rem;
+}
+
+.generator-chip-placeholder {
+  border-style: dashed;
+  color: var(--muted);
+  background: #fdfefd;
+}
+
+.generator-chip-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  flex: 0 0 auto;
+}
+
+.generator-chip-text {
+  line-height: 1;
+}
+
+.generator-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid #cddbd2;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #496857;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.generator-chip-remove:hover,
+.generator-chip-remove:focus-visible {
+  background: rgba(47, 125, 90, 0.12);
+  border-color: #93b29f;
+  color: var(--ink);
+  outline: none;
+}
+
+.generator-selection-summary {
+  margin-bottom: 0.8rem;
 }
 
 .design-output {
   margin-top: 0.8rem;
-  border: 1px dashed #ccddd4;
   border-radius: 14px;
   padding: 0.8rem;
   background: #fcfffd;
@@ -544,7 +695,7 @@ button:focus-visible {
 .design-palette {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  margin: 0.5rem 0 1rem;
 }
 
 .design-dot {
@@ -554,11 +705,34 @@ button:focus-visible {
   border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
+.design-save-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.design-save-status {
+  color: #406a55;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.btn:disabled {
+  cursor: default;
+  transform: none;
+}
+
+.btn-saved {
+  background: #7ea88e;
+  color: #ffffff;
+}
+
 .design-library {
   margin-top: 0.8rem;
   display: grid;
   gap: 0.7rem;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 }
 
 .design-card {
@@ -568,9 +742,98 @@ button:focus-visible {
   padding: 0.75rem;
 }
 
+.design-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.design-card-head h3 {
+  margin: 0;
+}
+
+.design-card-swatches {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.design-image-wrap {
+  margin-top: 0.8rem;
+}
+
+.design-image {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid #e2e8e1;
+  background: #f8fbf9;
+}
+
+.design-status-badge {
+  flex: 0 0 auto;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.design-status-badge.is-tried {
+  background: #e7f4eb;
+  color: #2d6d4c;
+}
+
+.design-status-badge.is-untried {
+  background: #f8efe3;
+  color: #96663b;
+}
+
 .design-card p {
   margin: 0.35rem 0 0;
   color: var(--muted);
+}
+
+.design-image-editor {
+  margin-top: 0.85rem;
+}
+
+.design-image-editor label {
+  color: var(--muted);
+}
+
+.design-image-actions {
+  margin-top: 0.55rem;
+}
+
+.design-upload-panel {
+  margin-top: 0.7rem;
+  padding: 0.85rem;
+  border: 1px solid #e4ebe5;
+  border-radius: 14px;
+  background: #f9fcfa;
+}
+
+.design-upload-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.design-upload-actions {
+  margin-top: 0.65rem;
+}
+
+.design-upload-status {
+  min-height: 1.1em;
+  margin: 0.55rem 0 0;
+}
+
+.design-card-actions {
+  margin-top: 0.95rem;
 }
 
 .menu-grid {
@@ -617,6 +880,10 @@ button:focus-visible {
   .layout > section:nth-child(4) {
     grid-column: span 6;
   }
+
+  .design-library {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -627,6 +894,10 @@ button:focus-visible {
   .main-nav {
     gap: 0.4rem;
     justify-content: flex-start;
+  }
+
+  .generator-dropdown {
+    width: 100%;
   }
 
   .nav-link {
