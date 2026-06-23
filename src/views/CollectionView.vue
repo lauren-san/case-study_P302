@@ -70,9 +70,9 @@ function confirmDelete(id: string, name: string, brand: string) {
     <div class="section-head">
       <h2 id="manage-title">My Collection</h2>
       <div class="inline-controls">
-        <button class="btn btn-secondary" type="button" :aria-pressed="studio.state.inventoryView === 'grid'" @click="studio.setInventoryView('grid')">Grid</button>
-        <button class="btn btn-secondary" type="button" :aria-pressed="studio.state.inventoryView === 'list'" @click="studio.setInventoryView('list')">List</button>
-        <button class="btn btn-primary" type="button" :aria-expanded="panelOpen" @click="panelOpen = !panelOpen">{{ panelOpen ? '✕ Close' : '+ Add Polish' }}</button>
+        <v-btn class="btn btn-secondary" variant="flat" type="button" :aria-pressed="studio.state.inventoryView === 'grid'" @click="studio.setInventoryView('grid')">Grid</v-btn>
+        <v-btn class="btn btn-secondary" variant="flat" type="button" :aria-pressed="studio.state.inventoryView === 'list'" @click="studio.setInventoryView('list')">List</v-btn>
+        <v-btn class="btn btn-primary" variant="flat" type="button" :aria-expanded="panelOpen" @click="panelOpen = !panelOpen">{{ panelOpen ? '✕ Close' : '+ Add Polish' }}</v-btn>
       </div>
     </div>
 
@@ -82,7 +82,7 @@ function confirmDelete(id: string, name: string, brand: string) {
           <label for="polishUrlInput">Product URL <span class="help-text inline">(paste a link to auto-fill)</span></label>
           <div class="url-input-row">
             <input id="polishUrlInput" type="url" placeholder="https://www.nailpolish.com/..." autocomplete="off" />
-            <button class="btn btn-secondary" type="button" @click="lookupPolish">{{ lookingUp ? 'Looking up…' : 'Auto-fill' }}</button>
+            <v-btn class="btn btn-secondary" variant="flat" type="button" @click="lookupPolish">{{ lookingUp ? 'Looking up…' : 'Auto-fill' }}</v-btn>
           </div>
           <p class="url-status" aria-live="polite">{{ urlStatus }}</p>
         </div>
@@ -116,8 +116,8 @@ function confirmDelete(id: string, name: string, brand: string) {
         </label>
 
         <div class="form-actions">
-          <button class="btn btn-primary" type="submit">Save Polish</button>
-          <button class="btn btn-secondary" type="button" @click="panelOpen = false">Cancel</button>
+          <v-btn class="btn btn-primary" variant="flat" type="submit">Save Polish</v-btn>
+          <v-btn class="btn btn-secondary" variant="flat" type="button" @click="panelOpen = false">Cancel</v-btn>
         </div>
       </form>
     </div>
@@ -195,11 +195,11 @@ function confirmDelete(id: string, name: string, brand: string) {
           <p class="polish-usage">Uses: {{ item.uses }}<span v-if="item.lastUsedAt"> | Last used: {{ studio.formatDate(item.lastUsedAt) }}</span></p>
         </div>
         <div class="polish-actions">
-          <button class="btn btn-icon favorite-btn" type="button" :aria-pressed="item.favorite" @click="studio.toggleFavorite(item.id)">{{ item.favorite ? '★' : '☆' }}</button>
+          <v-btn class="btn btn-icon favorite-btn" variant="flat" type="button" :aria-pressed="item.favorite" @click="studio.toggleFavorite(item.id)">{{ item.favorite ? '★' : '☆' }}</v-btn>
           <div class="polish-actions-bottom">
-            <button class="btn btn-secondary small use-btn" type="button" @click="studio.logUse(item.id)">Log Use</button>
-            <button class="btn btn-secondary small remove-use-btn" type="button" :disabled="item.uses === 0" @click="studio.removeUse(item.id)">Remove Use</button>
-            <button class="btn btn-danger small delete-btn" type="button" @click="confirmDelete(item.id, item.name, item.brand)">Delete</button>
+            <v-btn class="btn btn-secondary small use-btn" variant="flat" type="button" @click="studio.logUse(item.id)">Log Use</v-btn>
+            <v-btn class="btn btn-secondary small remove-use-btn" variant="flat" type="button" :disabled="item.uses === 0" @click="studio.removeUse(item.id)">Remove Use</v-btn>
+            <v-btn class="btn btn-danger small delete-btn" variant="flat" type="button" @click="confirmDelete(item.id, item.name, item.brand)">Delete</v-btn>
           </div>
         </div>
       </article>

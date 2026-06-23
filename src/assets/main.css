@@ -343,6 +343,18 @@ button:focus-visible {
   transition: transform 160ms ease, background 160ms ease;
 }
 
+.btn.v-btn {
+  text-transform: none;
+  letter-spacing: normal;
+  min-width: 0;
+  height: auto;
+  box-shadow: none;
+}
+
+.btn.v-btn .v-btn__content {
+  font-weight: inherit;
+}
+
 .btn:hover {
   transform: translateY(-1px);
 }
@@ -548,6 +560,11 @@ button:focus-visible {
   position: relative;
 }
 
+.generator-dropdown-btn.v-btn {
+  justify-content: flex-start;
+  padding-right: 2.2rem;
+}
+
 .generator-dropdown-btn::after {
   content: "▾";
   position: absolute;
@@ -635,6 +652,33 @@ button:focus-visible {
   background: #fbfdfb;
   color: var(--ink);
   font-size: 0.88rem;
+}
+
+.generator-chip.v-chip {
+  border-radius: 999px;
+  border: 1px solid #d7e3db !important;
+  background: #ffffff !important;
+  color: var(--ink) !important;
+}
+
+.generator-chip.v-chip .v-chip__content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.generator-chip-remove {
+  border: 0;
+  background: transparent;
+  color: #5a7868;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.generator-chip-remove:hover {
+  color: #274f3b;
 }
 
 .generator-chip-placeholder {
