@@ -1,5 +1,24 @@
 # Nail Art Website — Brief
 
+## Current Build Status (June 2026)
+
+This brief now reflects the shipped implementation in this repository.
+
+- Framework: Vue 3 + Vite + TypeScript + Vue Router
+- Routing:
+  - `/` = My Collection
+  - `/generator` = Nail Art Generator
+  - `/library` = Design Library
+- State and persistence:
+  - Shared composable state in `src/composables/useStudio.ts`
+  - `localStorage` key: `nail-studio-state-v1`
+- Tooling choices:
+  - Pinia: not used
+  - Testing scaffolds: not included
+  - JSX: not used
+  - ESLint: not included
+  - Prettier: not included
+
 ## Summary
 A nail art inspiration and tracking website designed for polish lovers. Users can manage their personal polish inventory, track usage over time, and generate nail art ideas based on the polishes they own.
 
@@ -19,12 +38,12 @@ The goal is to make it easy and fun to:
   - Color (with visual swatch)
   - Finish (matte, glitter, chrome, etc.)
   - Date purchased
+  - Image URL
 - Track usage:
   - Increment “uses” count per application
 - Favorite polishes:
   - Star/favorite toggle
-- Optional tags:
-  - Seasonal, work-safe, bold, etc.
+- Duplicate warning for same name + brand
 
 ### 2. Inventory Views
 - Grid view (visual-first, swatches)
@@ -33,29 +52,39 @@ The goal is to make it easy and fun to:
   - Most used
   - Favorites)
 - Filters:
-  - Color
+  - Search (name + brand)
+  - Brand
+  - Color family
   - Finish
   - Favorites
   - Recently used
 
 ### 3. Nail Art Generator
 - Select polishes (manual or auto-suggest)
+  - Manual selector is a multi-select dropdown
+  - Selected chips with swatches and remove `x`
 - Generate design ideas based on:
   - Color combinations (complementary, monochrome, etc.)
   - Finish mix (matte + gloss, glitter accents)
 - Output:
-  - Simple design description
-  - Visual mock (optional future)
+  - Design title
+  - Design description
+  - Palette swatches
 - Ability to:
   - Save designs
-  - Mark as “tried”
+  - Show inline “saved” confirmation next to button
 
 ### 4. Design Library
 - Saved designs gallery
 - Filter by:
-  - Polishes used
-  - Favorites
   - Tried vs. not tried
+  - Includes favorite polish
+- Each saved design card includes:
+  - Generated design name
+  - Palette swatches
+  - Tried/not tried badge
+  - Optional uploaded design image
+    - Upload controls appear only after pressing Add/Update Image button
 
 ### 5. UX Principles
 - Visual-first (color swatches are key)
