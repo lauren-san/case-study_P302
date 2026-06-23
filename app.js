@@ -23,10 +23,16 @@ const state = {
 
 const els = {
   polishForm: document.getElementById("polishForm"),
+  polishUrlInput: document.getElementById("polishUrlInput"),
+  polishUrlBtn: document.getElementById("polishUrlBtn"),
+  polishUrlStatus: document.getElementById("polishUrlStatus"),
+  toggleAddForm: document.getElementById("toggleAddForm"),
+  cancelAddForm: document.getElementById("cancelAddForm"),
+  addPolishPanel: document.getElementById("addPolishPanel"),
   headerStats: document.getElementById("headerStats"),
   inventoryContainer: document.getElementById("inventoryContainer"),
   cardTemplate: document.getElementById("polishCardTemplate"),
-  finishFilter: document.getElementById("finishFilter"),
+  finishFilter: document.getElementById("formulaFilter"),
   searchInput: document.getElementById("searchInput"),
   colorFilter: document.getElementById("colorFilter"),
   favoriteFilter: document.getElementById("favoriteFilter"),
@@ -150,9 +156,9 @@ function onAddPolish(event) {
   const name = String(form.get("name") || "").trim();
   const brand = String(form.get("brand") || "").trim();
   const color = String(form.get("color") || "#e2527d");
-  const finish = String(form.get("finish") || "").trim();
+  const finish = String(form.get("formula") || "").trim();
   const datePurchased = String(form.get("datePurchased") || "");
-  const tags = parseTags(String(form.get("tags") || ""));
+  const imageUrl = String(form.get("imageUrl") || "").trim();
 
   if (!name || !brand || !finish || !datePurchased) return;
 
@@ -168,7 +174,7 @@ function onAddPolish(event) {
     color,
     finish,
     datePurchased,
-    tags,
+    imageUrl,
     uses: 0,
     favorite: false,
     lastUsedAt: null,
@@ -177,6 +183,14 @@ function onAddPolish(event) {
 
   event.currentTarget.reset();
   event.currentTarget.querySelector("input[name='color']").value = "#e2527d";
+  // Close the add panel after saving
+  if (els.addPolishPanel) {
+    els.addPolishPanel.hidden = true;
+    if (els.toggleAddForm) {
+      els.toggleAddForm.setAttribute("aria-expanded", "false");
+      els.toggleAddForm.textContent = "+ Add Polish";
+    }
+  }
   persist();
   refresh();
 }
@@ -249,7 +263,12 @@ function renderInventory() {
     node.querySelector(".swatch").style.background = item.color;
     node.querySelector(".polish-name").textContent = item.name;
     node.querySelector(".polish-meta").textContent = `${item.brand} | ${item.finish} | ${formatDate(item.datePurchased)} | ${inventoryAgeText(item)}`;
-    node.querySelector(".polish-tags").textContent = item.tags.length ? `Tags: ${item.tags.join(", ")}` : "Tags: none";
+    const imageWrap = node.querySelector(".polish-image-wrap");
+    if (item.imageUrl) {
+      imageWrap.innerHTML = `<img src="${item.imageUrl}" alt="${item.name}" class="polish-card-img" />`;
+    } else {
+      imageWrap.innerHTML = "";
+    }
     node.querySelector(".polish-usage").textContent = `Uses: ${item.uses}${item.lastUsedAt ? ` | Last used: ${formatDate(item.lastUsedAt)}` : ""}`;
 
     const favoriteBtn = node.querySelector(".favorite-btn");
@@ -287,7 +306,7 @@ function populateFinishFilter() {
   if (!els.finishFilter) return;
   const current = state.filters.finish;
   const uniqueFinishes = [...new Set(state.polishes.map((p) => p.finish))];
-  els.finishFilter.innerHTML = `<option value="all">All finishes</option>${uniqueFinishes
+  els.finishFilter.innerHTML = `<option value="all">All formulas</option>${uniqueFinishes
     .map((finish) => `<option value="${finish}">${finish}</option>`)
     .join("")}`;
   els.finishFilter.value = uniqueFinishes.includes(current) ? current : "all";
@@ -465,9 +484,132 @@ function renderDesignLibrary() {
   });
 }
 
+async function lookupPolishUrl(rawUrl) {
+  let parsed;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    return { note: "Invalid URL — fill in manually." };
+  }
+
+  // Derive brand from hostname (e.g. www.opi.com → OPI, essie.com → Essie)
+  const host = parsed.hostname.replace(/^www\./, "").split(".");
+  const brandGuess = host[0].charAt(0).toUpperCase() + host[0].slice(1);
+
+  // Derive name from the last non-empty URL path segment
+  const segments = parsed.pathname.split("/").map((s) => s.trim()).filter(Boolean);
+  const slug = segments[segments.length - 1] || "";
+  const nameGuess = slug
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+
+  // Try fetching via CORS proxy to pull og:title / og:site_name / og:image / formula
+  try {
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rawUrl)}`;
+    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error("proxy error");
+    const data = await res.json();
+    const html = data.contents || "";
+
+    const ogTitle = (
+      html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i)
+    )?.[1] || "";
+
+    const ogSite = (
+      html.match(/<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:site_name["']/i)
+    )?.[1] || "";
+
+    const ogImage = (
+      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
+    )?.[1] || "";
+
+    // Detect formula by scanning page text for known keywords (order matters — most specific first)
+    const formulaMap = [
+      { key: "holographic", label: "Holographic" },
+      { key: "glitter",     label: "Glitter" },
+      { key: "chrome",      label: "Chrome" },
+      { key: "jelly",       label: "Jelly" },
+      { key: "matte",       label: "Matte" },
+      { key: "crème",       label: "Crème" },
+      { key: "cream",       label: "Crème" },
+      { key: "gloss",       label: "Gloss" },
+    ];
+    const htmlLower = html.toLowerCase();
+    const detectedFormula = formulaMap.find((f) => htmlLower.includes(f.key))?.label || "";
+
+    const name = ogTitle
+      ? ogTitle.replace(/\s*[|\-–]\s*.+$/, "").trim()
+      : nameGuess;
+
+    return {
+      name: name || nameGuess,
+      brand: ogSite || brandGuess,
+      formula: detectedFormula,
+      imageUrl: ogImage,
+      note: "Fields filled from product page — please verify.",
+    };
+  } catch {
+    return {
+      name: nameGuess,
+      brand: brandGuess,
+      formula: "",
+      imageUrl: "",
+      note: "Filled from URL (couldn't reach page) — please verify.",
+    };
+  }
+}
+
 function bindEvents() {
+  if (els.toggleAddForm && els.addPolishPanel) {
+    const openPanel = () => {
+      els.addPolishPanel.hidden = false;
+      els.toggleAddForm.setAttribute("aria-expanded", "true");
+      els.toggleAddForm.textContent = "✕ Close";
+      els.addPolishPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    };
+    const closePanel = () => {
+      els.addPolishPanel.hidden = true;
+      els.toggleAddForm.setAttribute("aria-expanded", "false");
+      els.toggleAddForm.textContent = "+ Add Polish";
+    };
+    els.toggleAddForm.addEventListener("click", () => {
+      els.addPolishPanel.hidden ? openPanel() : closePanel();
+    });
+    if (els.cancelAddForm) {
+      els.cancelAddForm.addEventListener("click", closePanel);
+    }
+  }
+
   if (els.polishForm) {
     els.polishForm.addEventListener("submit", onAddPolish);
+  }
+
+  if (els.polishUrlBtn) {
+    els.polishUrlBtn.addEventListener("click", async () => {
+      const url = (els.polishUrlInput.value || "").trim();
+      if (!url) return;
+      els.polishUrlBtn.textContent = "Looking up…";
+      els.polishUrlBtn.disabled = true;
+      els.polishUrlStatus.textContent = "";
+      try {
+        const result = await lookupPolishUrl(url);
+        const form = els.polishForm;
+        if (result.name) form.elements["name"].value = result.name;
+        if (result.brand) form.elements["brand"].value = result.brand;
+        if (result.formula) form.elements["formula"].value = result.formula;
+        if (result.imageUrl) form.elements["imageUrl"].value = result.imageUrl;
+        els.polishUrlStatus.textContent = result.note || "Fields filled — please verify and complete the rest.";
+      } catch {
+        els.polishUrlStatus.textContent = "Couldn't read that page. Fill in manually.";
+      } finally {
+        els.polishUrlBtn.textContent = "Auto-fill";
+        els.polishUrlBtn.disabled = false;
+      }
+    });
   }
 
   if (els.searchInput) {
@@ -557,15 +699,6 @@ function refresh() {
   if (els.gridViewBtn && els.listViewBtn) {
     els.gridViewBtn.setAttribute("aria-pressed", state.inventoryView === "grid" ? "true" : "false");
     els.listViewBtn.setAttribute("aria-pressed", state.inventoryView === "list" ? "true" : "false");
-  }
-
-  if (currentPage === "management") {
-    state.filters.search = "";
-    state.filters.color = "all";
-    state.filters.finish = "all";
-    state.filters.favorite = "all";
-    state.filters.recent = "all";
-    state.filters.sortBy = "date";
   }
 
   renderHeaderStats();
