@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory Views | Polished</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="hero-page" data-page="inventory">
+  <main class="layout simple-layout">
+    <section class="hero hero-full" aria-labelledby="hero-title">
+      <p class="eyebrow hero-eyebrow">Nail Art Studio</p>
+      <h1 id="hero-title" class="hero-title">Polished</h1>
+      <p class="subtitle hero-subtitle">Filter, sort, and switch between visual grid or detailed list.</p>
+      <nav class="main-nav hero-nav" aria-label="Main menu">
+        <a class="nav-link" href="index.html#content">Nail Art Generator</a>
+        <a class="nav-link" href="management.html#content">Polish Management</a>
+        <a class="nav-link active" href="inventory.html#content">Inventory Views</a>
+        <a class="nav-link" href="library.html#content">Design Library</a>
+      </nav>
+    </section>
+
+    <section id="content" class="card section-shell" aria-labelledby="inventory-title">
+      <div class="section-head">
+        <h2 id="inventory-title">Collection</h2>
+        <div class="inline-controls">
+          <button class="btn btn-secondary" id="gridViewBtn" type="button" aria-pressed="true">Grid</button>
+          <button class="btn btn-secondary" id="listViewBtn" type="button" aria-pressed="false">List</button>
+        </div>
+      </div>
+
+      <div class="filters" aria-label="Inventory filters">
+        <label>
+          Search
+          <input id="searchInput" type="text" placeholder="name or brand" />
+        </label>
+        <label>
+          Color family
+          <select id="colorFilter">
+            <option value="all">All colors</option>
+            <option value="red">Red</option>
+            <option value="orange">Orange</option>
+            <option value="yellow">Yellow</option>
+            <option value="green">Green</option>
+            <option value="blue">Blue</option>
+            <option value="purple">Purple</option>
+            <option value="pink">Pink</option>
+            <option value="neutral">Neutral</option>
+          </select>
+        </label>
+        <label>
+          Finish
+          <select id="finishFilter">
+            <option value="all">All finishes</option>
+          </select>
+        </label>
+        <label>
+          Favorites
+          <select id="favoriteFilter">
+            <option value="all">All</option>
+            <option value="favorites">Favorites</option>
+          </select>
+        </label>
+        <label>
+          Recently used
+          <select id="recentFilter">
+            <option value="all">Any time</option>
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="never">Never used</option>
+          </select>
+        </label>
+        <label>
+          Sort by
+          <select id="sortBy">
+            <option value="date">Date purchased</option>
+            <option value="uses">Most used</option>
+            <option value="favorites">Favorites first</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="inventoryContainer" class="inventory grid-view" role="list"></div>
+    </section>
+  </main>
+
+  <template id="polishCardTemplate">
+    <article class="polish-card" role="listitem">
+      <div class="swatch" aria-hidden="true"></div>
+      <div class="polish-body">
+        <h3 class="polish-name"></h3>
+        <p class="polish-meta"></p>
+        <p class="polish-tags"></p>
+        <p class="polish-usage"></p>
+      </div>
+      <div class="polish-actions">
+        <button class="btn btn-icon favorite-btn" type="button" aria-label="Toggle favorite">☆</button>
+        <button class="btn btn-secondary small use-btn" type="button">Log Use</button>
+        <button class="btn btn-danger small delete-btn" type="button">Delete</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>

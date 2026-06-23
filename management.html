@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polish Management | Polished</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="hero-page" data-page="management" data-default-view="list">
+  <main class="layout simple-layout">
+    <section class="hero hero-full" aria-labelledby="hero-title">
+      <p class="eyebrow hero-eyebrow">Nail Art Studio</p>
+      <h1 id="hero-title" class="hero-title">Polished</h1>
+      <p class="subtitle hero-subtitle">Add and maintain your collection with quick usage actions.</p>
+      <nav class="main-nav hero-nav" aria-label="Main menu">
+        <a class="nav-link" href="index.html#content">Nail Art Generator</a>
+        <a class="nav-link active" href="management.html#content">Polish Management</a>
+        <a class="nav-link" href="inventory.html#content">Inventory Views</a>
+        <a class="nav-link" href="library.html#content">Design Library</a>
+      </nav>
+    </section>
+
+    <section id="content" class="card section-shell" aria-labelledby="add-polish-title">
+      <h2 id="add-polish-title">Add Polish</h2>
+      <form id="polishForm" class="form-grid">
+        <label>
+          Name
+          <input name="name" type="text" required />
+        </label>
+        <label>
+          Brand
+          <input name="brand" type="text" required />
+        </label>
+        <label>
+          Color
+          <input name="color" type="color" value="#e2527d" aria-label="Choose polish color" />
+        </label>
+        <label>
+          Finish
+          <select name="finish" required>
+            <option value="">Select finish</option>
+            <option>Matte</option>
+            <option>Gloss</option>
+            <option>Glitter</option>
+            <option>Chrome</option>
+            <option>Jelly</option>
+            <option>Holographic</option>
+            <option>Cream</option>
+          </select>
+        </label>
+        <label>
+          Date Purchased
+          <input name="datePurchased" type="date" required />
+        </label>
+        <label>
+          Tags (comma separated)
+          <input name="tags" type="text" placeholder="seasonal, work-safe" />
+        </label>
+        <button class="btn btn-primary" type="submit">Save Polish</button>
+      </form>
+    </section>
+
+    <section class="card section-shell" aria-labelledby="quick-manage-title">
+      <h2 id="quick-manage-title">Quick Management List</h2>
+      <p class="help-text">Use actions to favorite, log usage, or delete items.</p>
+      <div id="inventoryContainer" class="inventory list-view" role="list"></div>
+    </section>
+  </main>
+
+  <template id="polishCardTemplate">
+    <article class="polish-card" role="listitem">
+      <div class="swatch" aria-hidden="true"></div>
+      <div class="polish-body">
+        <h3 class="polish-name"></h3>
+        <p class="polish-meta"></p>
+        <p class="polish-tags"></p>
+        <p class="polish-usage"></p>
+      </div>
+      <div class="polish-actions">
+        <button class="btn btn-icon favorite-btn" type="button" aria-label="Toggle favorite">☆</button>
+        <button class="btn btn-secondary small use-btn" type="button">Log Use</button>
+        <button class="btn btn-danger small delete-btn" type="button">Delete</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>

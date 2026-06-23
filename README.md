@@ -1,4 +1,4 @@
-# Nail Studio Vault
+# Polished
 
 A lightweight web app for managing nail polish inventory and generating nail art ideas from your collection.
 
@@ -6,6 +6,8 @@ A lightweight web app for managing nail polish inventory and generating nail art
 
 1. Open the project folder.
 2. Open [index.html](index.html) in your browser.
+3. Home opens directly to the Nail Art Generator.
+4. Use the top-right menu to navigate the other concept pages.
 
 No build step or dependencies are required.
 
@@ -68,7 +70,6 @@ No build step or dependencies are required.
 
 - Inventory age indicator based on purchase date.
 - Duplicate detection warning.
-- "Unused" summary metric in header stats.
 
 ## Tech
 
@@ -76,8 +77,15 @@ No build step or dependencies are required.
 - CSS
 - Vanilla JavaScript (no framework)
 
-## Files
+## Pages
 
-- [index.html](index.html): App structure and UI sections
-- [styles.css](styles.css): Design system and responsive styling
-- [app.js](app.js): App state, filtering logic, generator, and persistence
+- [index.html](index.html): Home (Nail Art Generator)
+- [management.html](management.html): Polish inventory management
+- [inventory.html](inventory.html): Inventory views, filters, and sorting
+- [library.html](library.html): Saved design library
+- [generator.html](generator.html): Redirects legacy generator path to home
+
+## Core Files
+
+- [styles.css](styles.css): Shared design system and responsive styling
+- [app.js](app.js): Shared app state, page-aware rendering, and localStorage persistence

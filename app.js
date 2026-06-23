@@ -1,4 +1,5 @@
 const STORAGE_KEY = "nail-studio-state-v1";
+const currentPage = document.body.dataset.page || "home";
 
 const state = {
   polishes: [],
@@ -56,6 +57,13 @@ function loadState() {
   } catch {
     state.polishes = [];
     state.designs = [];
+  }
+}
+
+function applyPageDefaults() {
+  const defaultView = document.body.dataset.defaultView;
+  if (defaultView === "grid" || defaultView === "list") {
+    state.inventoryView = defaultView;
   }
 }
 
@@ -208,6 +216,7 @@ function filteredPolishes() {
 }
 
 function renderHeaderStats() {
+  if (!els.headerStats) return;
   const total = state.polishes.length;
   const favorites = state.polishes.filter((p) => p.favorite).length;
   const totalUses = state.polishes.reduce((sum, p) => sum + p.uses, 0);
@@ -222,6 +231,8 @@ function renderHeaderStats() {
 }
 
 function renderInventory() {
+  if (!els.inventoryContainer || !els.cardTemplate) return;
+
   const items = filteredPolishes();
   els.inventoryContainer.classList.toggle("grid-view", state.inventoryView === "grid");
   els.inventoryContainer.classList.toggle("list-view", state.inventoryView === "list");
@@ -273,6 +284,7 @@ function renderInventory() {
 }
 
 function populateFinishFilter() {
+  if (!els.finishFilter) return;
   const current = state.filters.finish;
   const uniqueFinishes = [...new Set(state.polishes.map((p) => p.finish))];
   els.finishFilter.innerHTML = `<option value="all">All finishes</option>${uniqueFinishes
@@ -283,6 +295,7 @@ function populateFinishFilter() {
 }
 
 function renderGeneratorList() {
+  if (!els.generatorPolishList) return;
   if (!state.polishes.length) {
     els.generatorPolishList.innerHTML = `<p class="muted">Add polishes to start generating ideas.</p>`;
     return;
@@ -330,6 +343,7 @@ function finishMix(polishes) {
 }
 
 function generateDesign() {
+  if (!els.generatedDesign) return;
   const chosen = state.polishes.filter((p) => state.selectedGeneratorIds.includes(p.id));
   const polishes = chosen.length ? chosen : state.polishes.slice(0, 3);
 
@@ -407,6 +421,7 @@ function polishNames(ids) {
 }
 
 function renderDesignLibrary() {
+  if (!els.designLibrary) return;
   const items = filteredDesigns();
   if (!items.length) {
     els.designLibrary.innerHTML = `<p class="muted">No saved designs match this filter yet.</p>`;
@@ -451,74 +466,126 @@ function renderDesignLibrary() {
 }
 
 function bindEvents() {
-  els.polishForm.addEventListener("submit", onAddPolish);
+  if (els.polishForm) {
+    els.polishForm.addEventListener("submit", onAddPolish);
+  }
 
-  els.searchInput.addEventListener("input", (event) => {
-    state.filters.search = event.target.value.toLowerCase().trim();
-    refresh();
-  });
+  if (els.searchInput) {
+    els.searchInput.addEventListener("input", (event) => {
+      state.filters.search = event.target.value.toLowerCase().trim();
+      refresh();
+    });
+  }
 
-  els.colorFilter.addEventListener("change", (event) => {
-    state.filters.color = event.target.value;
-    refresh();
-  });
+  if (els.colorFilter) {
+    els.colorFilter.addEventListener("change", (event) => {
+      state.filters.color = event.target.value;
+      refresh();
+    });
+  }
 
-  els.finishFilter.addEventListener("change", (event) => {
-    state.filters.finish = event.target.value;
-    refresh();
-  });
+  if (els.finishFilter) {
+    els.finishFilter.addEventListener("change", (event) => {
+      state.filters.finish = event.target.value;
+      refresh();
+    });
+  }
 
-  els.favoriteFilter.addEventListener("change", (event) => {
-    state.filters.favorite = event.target.value;
-    refresh();
-  });
+  if (els.favoriteFilter) {
+    els.favoriteFilter.addEventListener("change", (event) => {
+      state.filters.favorite = event.target.value;
+      refresh();
+    });
+  }
 
-  els.recentFilter.addEventListener("change", (event) => {
-    state.filters.recent = event.target.value;
-    refresh();
-  });
+  if (els.recentFilter) {
+    els.recentFilter.addEventListener("change", (event) => {
+      state.filters.recent = event.target.value;
+      refresh();
+    });
+  }
 
-  els.sortBy.addEventListener("change", (event) => {
-    state.filters.sortBy = event.target.value;
-    refresh();
-  });
+  if (els.sortBy) {
+    els.sortBy.addEventListener("change", (event) => {
+      state.filters.sortBy = event.target.value;
+      refresh();
+    });
+  }
 
-  els.gridViewBtn.addEventListener("click", () => {
-    state.inventoryView = "grid";
-    els.gridViewBtn.setAttribute("aria-pressed", "true");
-    els.listViewBtn.setAttribute("aria-pressed", "false");
-    refresh();
-  });
+  if (els.gridViewBtn && els.listViewBtn) {
+    els.gridViewBtn.addEventListener("click", () => {
+      state.inventoryView = "grid";
+      els.gridViewBtn.setAttribute("aria-pressed", "true");
+      els.listViewBtn.setAttribute("aria-pressed", "false");
+      refresh();
+    });
 
-  els.listViewBtn.addEventListener("click", () => {
-    state.inventoryView = "list";
-    els.gridViewBtn.setAttribute("aria-pressed", "false");
-    els.listViewBtn.setAttribute("aria-pressed", "true");
-    refresh();
-  });
+    els.listViewBtn.addEventListener("click", () => {
+      state.inventoryView = "list";
+      els.gridViewBtn.setAttribute("aria-pressed", "false");
+      els.listViewBtn.setAttribute("aria-pressed", "true");
+      refresh();
+    });
+  }
 
-  els.autoSuggestBtn.addEventListener("click", suggestPolishes);
-  els.generateDesignBtn.addEventListener("click", generateDesign);
+  if (els.autoSuggestBtn) {
+    els.autoSuggestBtn.addEventListener("click", suggestPolishes);
+  }
 
-  els.designStatusFilter.addEventListener("change", (event) => {
-    state.designFilters.status = event.target.value;
-    refresh();
-  });
+  if (els.generateDesignBtn) {
+    els.generateDesignBtn.addEventListener("click", generateDesign);
+  }
 
-  els.designFavoriteFilter.addEventListener("change", (event) => {
-    state.designFilters.favorite = event.target.value;
-    refresh();
-  });
+  if (els.designStatusFilter) {
+    els.designStatusFilter.addEventListener("change", (event) => {
+      state.designFilters.status = event.target.value;
+      refresh();
+    });
+  }
+
+  if (els.designFavoriteFilter) {
+    els.designFavoriteFilter.addEventListener("change", (event) => {
+      state.designFilters.favorite = event.target.value;
+      refresh();
+    });
+  }
 }
 
 function refresh() {
   populateFinishFilter();
+
+  if (els.gridViewBtn && els.listViewBtn) {
+    els.gridViewBtn.setAttribute("aria-pressed", state.inventoryView === "grid" ? "true" : "false");
+    els.listViewBtn.setAttribute("aria-pressed", state.inventoryView === "list" ? "true" : "false");
+  }
+
+  if (currentPage === "management") {
+    state.filters.search = "";
+    state.filters.color = "all";
+    state.filters.finish = "all";
+    state.filters.favorite = "all";
+    state.filters.recent = "all";
+    state.filters.sortBy = "date";
+  }
+
   renderHeaderStats();
   renderInventory();
   renderGeneratorList();
   renderDesignLibrary();
 }
 
+function scrollToContentOnNav() {
+  if (window.location.hash !== "#content") return;
+  const target = document.getElementById("content");
+  if (!target) return;
+  window.scrollTo(0, 0);
+  window.setTimeout(() => {
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 80);
+}
+
 loadState();
+applyPageDefaults();
 bindEvents();
 refresh();
+scrollToContentOnNav();
