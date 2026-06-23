@@ -1,90 +1,54 @@
-# Polished
+# Polished (Vue)
 
-A lightweight web app for managing nail polish inventory and generating nail art ideas from your collection.
+A Vue + Vite + TypeScript nail studio app for managing polish inventory, generating nail design ideas, and saving designs.
 
-## Quick Start
+## Stack
 
-1. Open the project folder.
-2. Open [index.html](index.html) in your browser.
-3. Home opens directly to the Nail Art Generator.
-4. Use the top-right menu to navigate the other concept pages.
+- Vue 3
+- Vite
+- TypeScript
+- Vue Router
 
-No build step or dependencies are required.
+Configured intentionally without:
 
-## Implemented Features
+- Pinia
+- Testing setup
+- JSX
+- ESLint
+- Prettier
 
-### 1. Polish Inventory Management
+## Run
 
-- Add polish with:
-	- Name
-	- Brand
-	- Color swatch
-	- Finish
-	- Date purchased
-	- Optional tags
-- Log use count per application.
-- Favorite toggle per polish.
-- Duplicate warning when the same name + brand is added.
+1. Install dependencies:
 
-### 2. Inventory Views
+```bash
+npm install
+```
 
-- Grid and list views.
-- Sort options:
-	- Date purchased
-	- Most used
-	- Favorites first
-- Filters:
-	- Search (name/brand)
-	- Color family
-	- Finish
-	- Favorites only
-	- Recently used (7 days, 30 days, never)
+2. Start development server:
 
-### 3. Nail Art Generator
+```bash
+npm run dev
+```
 
-- Manual polish selection (up to 3).
-- Auto-suggest based on least-used and recently purchased polish.
-- Rule-based design generation using:
-	- Color relationship (monochrome, analog, complementary)
-	- Finish mix (single texture, matte/gloss, glitter accent, mixed)
-- Save generated idea to design library.
+3. Build for production:
 
-### 4. Design Library
+```bash
+npm run build
+```
 
-- Saved designs gallery.
-- Mark design as tried/not tried.
-- Delete saved designs.
-- Filter by:
-	- Tried status
-	- Includes favorite polish
+## Routes
 
-### 5. UX and Accessibility
+- `/` - My Collection
+- `/generator` - Nail Art Generator
+- `/library` - Design Library
 
-- Visual-first layout with color swatches.
-- Quick actions for logging use and favoriting.
-- Local persistence using browser localStorage.
-- Labels and ARIA attributes for core controls.
-- Color is not the only identifier; names and metadata are always shown.
+## Key Structure
 
-## Nice-to-Haves Included
-
-- Inventory age indicator based on purchase date.
-- Duplicate detection warning.
-
-## Tech
-
-- HTML
-- CSS
-- Vanilla JavaScript (no framework)
-
-## Pages
-
-- [index.html](index.html): Home (Nail Art Generator)
-- [collection.html](collection.html): Combined polish collection management, filters, and sorting
-- [library.html](library.html): Saved design library
-- [generator.html](generator.html): Redirects legacy generator path to home
-
-## Core Files
-
-- [styles.css](styles.css): Shared design system and responsive styling
-- [app.js](app.js): Shared app state, page-aware rendering, and localStorage persistence
+- [src/App.vue](src/App.vue): shared hero shell + top navigation
+- [src/router/index.ts](src/router/index.ts): route definitions
+- [src/composables/useStudio.ts](src/composables/useStudio.ts): shared state/actions + localStorage persistence
+- [src/views/CollectionView.vue](src/views/CollectionView.vue): inventory management
+- [src/views/GeneratorView.vue](src/views/GeneratorView.vue): idea generation
+- [src/views/LibraryView.vue](src/views/LibraryView.vue): saved designs gallery
+- [src/assets/main.css](src/assets/main.css): app styling
