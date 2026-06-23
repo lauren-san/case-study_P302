@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="hero-page" data-page="collection">
+<body class="hero-page" data-page="collection" data-default-view="list">
   <main class="layout simple-layout">
     <section class="hero hero-full" aria-labelledby="hero-title">
       <p class="eyebrow hero-eyebrow">Nail Art Studio</p>
@@ -17,7 +17,7 @@
       <p class="subtitle hero-subtitle">Manage your collection, filter, and switch views.</p>
       <nav class="main-nav hero-nav" aria-label="Main menu">
         <a class="nav-link" href="index.html#content">Nail Art Generator</a>
-        <a class="nav-link active" href="management.html#content">My Collection</a>
+        <a class="nav-link active" href="collection.html#content">My Collection</a>
         <a class="nav-link" href="library.html#content">Design Library</a>
       </nav>
       <div class="hero-bottles" aria-hidden="true">
@@ -67,7 +67,7 @@
           <div class="url-lookup">
             <label for="polishUrlInput">Product URL <span class="help-text inline">(paste a link to auto-fill)</span></label>
             <div class="url-input-row">
-              <input id="polishUrlInput" type="url" placeholder="https://www.opi.com/products/..." autocomplete="off" />
+              <input id="polishUrlInput" type="url" placeholder="https://www.nailpolish.com/..." autocomplete="off" />
               <button id="polishUrlBtn" class="btn btn-secondary" type="button">Auto-fill</button>
             </div>
             <p id="polishUrlStatus" class="url-status" aria-live="polite"></p>
@@ -102,8 +102,8 @@
             <input name="datePurchased" type="date" required />
           </label>
           <label>
-            Image URL <span class="help-text inline">(optional)</span>
-            <input name="imageUrl" type="url" placeholder="https://..." />
+            Image URL
+            <input name="imageUrl" type="url" placeholder="https://..." required />
           </label>
           <div class="form-actions">
             <button class="btn btn-primary" type="submit">Save Polish</button>
@@ -115,7 +115,13 @@
       <div class="filters" aria-label="Inventory filters">
         <label>
           Search
-          <input id="searchInput" type="text" placeholder="name or brand" />
+          <input id="searchInput" type="text" placeholder="Name of polish" />
+        </label>
+        <label>
+          Brand
+          <select id="brandFilter">
+            <option value="all">All brands</option>
+          </select>
         </label>
         <label>
           Color family
@@ -135,13 +141,13 @@
           Formula
           <select id="formulaFilter">
             <option value="all">All formulas</option>
-          </select>
-        </label>
-        <label>
-          Favorites
-          <select id="favoriteFilter">
-            <option value="all">All</option>
-            <option value="favorites">Favorites</option>
+            <option value="Matte">Matte</option>
+            <option value="Gloss">Gloss</option>
+            <option value="Glitter">Glitter</option>
+            <option value="Chrome">Chrome</option>
+            <option value="Jelly">Jelly</option>
+            <option value="Holographic">Holographic</option>
+            <option value="Crème">Crème</option>
           </select>
         </label>
         <label>
@@ -161,6 +167,14 @@
             <option value="favorites">Favorites first</option>
           </select>
         </label>
+        <label>
+          Favorites
+          <span class="filter-toggle-row">
+            <input id="favoriteFilter" class="filter-toggle-input" type="checkbox" />
+            <span class="filter-toggle-switch" aria-hidden="true"></span>
+            <span>Favorites only</span>
+          </span>
+        </label>
       </div>
 
       <div id="inventoryContainer" class="inventory list-view" role="list"></div>
@@ -178,8 +192,11 @@
       </div>
       <div class="polish-actions">
         <button class="btn btn-icon favorite-btn" type="button" aria-label="Toggle favorite">☆</button>
-        <button class="btn btn-secondary small use-btn" type="button">Log Use</button>
-        <button class="btn btn-danger small delete-btn" type="button">Delete</button>
+        <div class="polish-actions-bottom">
+          <button class="btn btn-secondary small use-btn" type="button">Log Use</button>
+          <button class="btn btn-secondary small remove-use-btn" type="button">Remove Use</button>
+          <button class="btn btn-danger small delete-btn" type="button">Delete</button>
+        </div>
       </div>
     </article>
   </template>

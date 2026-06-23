@@ -7,6 +7,7 @@ const state = {
   inventoryView: "grid",
   filters: {
     search: "",
+    brand: "all",
     color: "all",
     finish: "all",
     favorite: "all",
@@ -34,6 +35,7 @@ const els = {
   cardTemplate: document.getElementById("polishCardTemplate"),
   finishFilter: document.getElementById("formulaFilter"),
   searchInput: document.getElementById("searchInput"),
+  brandFilter: document.getElementById("brandFilter"),
   colorFilter: document.getElementById("colorFilter"),
   favoriteFilter: document.getElementById("favoriteFilter"),
   recentFilter: document.getElementById("recentFilter"),
@@ -53,17 +55,131 @@ function id() {
   return `${Date.now()}-${Math.random().toString(16).slice(2, 7)}`;
 }
 
+function sampleImage(mainColor, accentColor) {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+      <rect width="120" height="120" rx="18" fill="#fff7fb"/>
+      <rect x="42" y="10" width="36" height="34" rx="6" fill="#1f1725"/>
+      <rect x="28" y="42" width="64" height="56" rx="16" fill="${mainColor}"/>
+      <rect x="38" y="50" width="16" height="40" rx="8" fill="${accentColor}" opacity="0.5"/>
+    </svg>
+  `;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function createSamplePolishes() {
+  return [
+    {
+      id: id(),
+      name: "Cherry Glaze",
+      brand: "OPI",
+      color: "#d92f4c",
+      finish: "Gloss",
+      datePurchased: "2026-01-12",
+      imageUrl: sampleImage("#d92f4c", "#ffd3dd"),
+      uses: 3,
+      favorite: true,
+      lastUsedAt: "2026-06-18T12:00:00.000Z",
+      createdAt: "2026-01-12T12:00:00.000Z"
+    },
+    {
+      id: id(),
+      name: "Velvet Orchid",
+      brand: "Essie",
+      color: "#9d4edd",
+      finish: "Crème",
+      datePurchased: "2026-02-03",
+      imageUrl: sampleImage("#9d4edd", "#ead7ff"),
+      uses: 1,
+      favorite: false,
+      lastUsedAt: "2026-05-28T12:00:00.000Z",
+      createdAt: "2026-02-03T12:00:00.000Z"
+    },
+    {
+      id: id(),
+      name: "Sea Glass",
+      brand: "Cirque Colors",
+      color: "#52b6c8",
+      finish: "Jelly",
+      datePurchased: "2026-03-21",
+      imageUrl: sampleImage("#52b6c8", "#d1f4fb"),
+      uses: 0,
+      favorite: false,
+      lastUsedAt: null,
+      createdAt: "2026-03-21T12:00:00.000Z"
+    },
+    {
+      id: id(),
+      name: "Disco Petal",
+      brand: "ILNP",
+      color: "#f15bb5",
+      finish: "Holographic",
+      datePurchased: "2026-04-09",
+      imageUrl: sampleImage("#f15bb5", "#ffe0f3"),
+      uses: 2,
+      favorite: true,
+      lastUsedAt: "2026-06-10T12:00:00.000Z",
+      createdAt: "2026-04-09T12:00:00.000Z"
+    },
+    {
+      id: id(),
+      name: "Molten Sunset",
+      brand: "Mooncat",
+      color: "#ff7b54",
+      finish: "Chrome",
+      datePurchased: "2026-05-14",
+      imageUrl: sampleImage("#ff7b54", "#ffe0d6"),
+      uses: 4,
+      favorite: true,
+      lastUsedAt: "2026-06-21T12:00:00.000Z",
+      createdAt: "2026-05-14T12:00:00.000Z"
+    }
+  ];
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
+    if (!raw) {
+      state.polishes = createSamplePolishes();
+      state.designs = [];
+      persist();
+      return;
+    }
     const data = JSON.parse(raw);
     state.polishes = Array.isArray(data.polishes) ? data.polishes : [];
     state.designs = Array.isArray(data.designs) ? data.designs : [];
+    if (!state.polishes.length) {
+      state.polishes = createSamplePolishes();
+      persist();
+      return;
+    }
+
+    const addedCount = mergeSamplePolishes();
+    if (addedCount) {
+      persist();
+    }
   } catch {
     state.polishes = [];
     state.designs = [];
   }
+}
+
+function mergeSamplePolishes() {
+  const samples = createSamplePolishes();
+  const existingKeys = new Set(
+    state.polishes.map((polish) => `${polish.name.toLowerCase()}::${polish.brand.toLowerCase()}`)
+  );
+  const toAdd = samples.filter((polish) => {
+    const key = `${polish.name.toLowerCase()}::${polish.brand.toLowerCase()}`;
+    return !existingKeys.has(key);
+  });
+
+  if (!toAdd.length) return 0;
+
+  state.polishes = [...toAdd, ...state.polishes];
+  persist();
+  return toAdd.length;
 }
 
 function applyPageDefaults() {
@@ -160,7 +276,7 @@ function onAddPolish(event) {
   const datePurchased = String(form.get("datePurchased") || "");
   const imageUrl = String(form.get("imageUrl") || "").trim();
 
-  if (!name || !brand || !finish || !datePurchased) return;
+  if (!name || !brand || !finish || !datePurchased || !imageUrl) return;
 
   const duplicate = detectDuplicates(name, brand);
   if (duplicate) {
@@ -198,10 +314,13 @@ function onAddPolish(event) {
 function filteredPolishes() {
   const now = Date.now();
   const filtered = state.polishes.filter((item) => {
+    const brand = item.brand || "";
+    const formula = item.finish || item.formula || "";
     const matchesSearch =
-      item.name.toLowerCase().includes(state.filters.search) || item.brand.toLowerCase().includes(state.filters.search);
+      item.name.toLowerCase().includes(state.filters.search) || brand.toLowerCase().includes(state.filters.search);
+    const matchesBrand = state.filters.brand === "all" || brand === state.filters.brand;
     const matchesColor = state.filters.color === "all" || colorFamily(item.color) === state.filters.color;
-    const matchesFinish = state.filters.finish === "all" || item.finish === state.filters.finish;
+    const matchesFinish = state.filters.finish === "all" || formula === state.filters.finish;
     const matchesFavorite = state.filters.favorite !== "favorites" || item.favorite;
 
     let matchesRecent = true;
@@ -217,7 +336,7 @@ function filteredPolishes() {
       }
     }
 
-    return matchesSearch && matchesColor && matchesFinish && matchesFavorite && matchesRecent;
+    return matchesSearch && matchesBrand && matchesColor && matchesFinish && matchesFavorite && matchesRecent;
   });
 
   filtered.sort((a, b) => {
@@ -272,8 +391,10 @@ function renderInventory() {
     node.querySelector(".polish-usage").textContent = `Uses: ${item.uses}${item.lastUsedAt ? ` | Last used: ${formatDate(item.lastUsedAt)}` : ""}`;
 
     const favoriteBtn = node.querySelector(".favorite-btn");
+    const removeUseBtn = node.querySelector(".remove-use-btn");
     favoriteBtn.textContent = item.favorite ? "★" : "☆";
     favoriteBtn.setAttribute("aria-pressed", item.favorite ? "true" : "false");
+    removeUseBtn.disabled = item.uses === 0;
 
     favoriteBtn.addEventListener("click", () => {
       item.favorite = !item.favorite;
@@ -288,7 +409,18 @@ function renderInventory() {
       refresh();
     });
 
+    removeUseBtn.addEventListener("click", () => {
+      item.uses = Math.max(0, item.uses - 1);
+      if (item.uses === 0) {
+        item.lastUsedAt = null;
+      }
+      persist();
+      refresh();
+    });
+
     node.querySelector(".delete-btn").addEventListener("click", () => {
+      const shouldDelete = window.confirm(`Delete ${item.name} by ${item.brand}?`);
+      if (!shouldDelete) return;
       state.polishes = state.polishes.filter((p) => p.id !== item.id);
       state.selectedGeneratorIds = state.selectedGeneratorIds.filter((idValue) => idValue !== item.id);
       persist();
@@ -305,12 +437,27 @@ function renderInventory() {
 function populateFinishFilter() {
   if (!els.finishFilter) return;
   const current = state.filters.finish;
-  const uniqueFinishes = [...new Set(state.polishes.map((p) => p.finish))];
+  const baseOptions = ["Matte", "Gloss", "Glitter", "Chrome", "Jelly", "Holographic", "Crème"];
+  const dynamicOptions = state.polishes
+    .map((p) => p.finish || p.formula || "")
+    .filter(Boolean);
+  const uniqueFinishes = [...new Set([...baseOptions, ...dynamicOptions])];
   els.finishFilter.innerHTML = `<option value="all">All formulas</option>${uniqueFinishes
     .map((finish) => `<option value="${finish}">${finish}</option>`)
     .join("")}`;
   els.finishFilter.value = uniqueFinishes.includes(current) ? current : "all";
   state.filters.finish = els.finishFilter.value;
+}
+
+function populateBrandFilter() {
+  if (!els.brandFilter) return;
+  const current = state.filters.brand;
+  const uniqueBrands = [...new Set(state.polishes.map((p) => p.brand).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  els.brandFilter.innerHTML = `<option value="all">All brands</option>${uniqueBrands.length ? uniqueBrands
+    .map((brand) => `<option value="${brand}">${brand}</option>`)
+    .join("") : `<option value="" disabled>No brands yet</option>`}`;
+  els.brandFilter.value = uniqueBrands.includes(current) ? current : "all";
+  state.filters.brand = els.brandFilter.value;
 }
 
 function renderGeneratorList() {
@@ -619,6 +766,13 @@ function bindEvents() {
     });
   }
 
+  if (els.brandFilter) {
+    els.brandFilter.addEventListener("change", (event) => {
+      state.filters.brand = event.target.value;
+      refresh();
+    });
+  }
+
   if (els.colorFilter) {
     els.colorFilter.addEventListener("change", (event) => {
       state.filters.color = event.target.value;
@@ -635,7 +789,7 @@ function bindEvents() {
 
   if (els.favoriteFilter) {
     els.favoriteFilter.addEventListener("change", (event) => {
-      state.filters.favorite = event.target.value;
+      state.filters.favorite = event.target.checked ? "favorites" : "all";
       refresh();
     });
   }
@@ -694,7 +848,12 @@ function bindEvents() {
 }
 
 function refresh() {
+  populateBrandFilter();
   populateFinishFilter();
+
+  if (els.favoriteFilter) {
+    els.favoriteFilter.checked = state.filters.favorite === "favorites";
+  }
 
   if (els.gridViewBtn && els.listViewBtn) {
     els.gridViewBtn.setAttribute("aria-pressed", state.inventoryView === "grid" ? "true" : "false");

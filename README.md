@@ -80,8 +80,7 @@ No build step or dependencies are required.
 ## Pages
 
 - [index.html](index.html): Home (Nail Art Generator)
-- [management.html](management.html): Polish inventory management
-- [inventory.html](inventory.html): Inventory views, filters, and sorting
+- [collection.html](collection.html): Combined polish collection management, filters, and sorting
 - [library.html](library.html): Saved design library
 - [generator.html](generator.html): Redirects legacy generator path to home
 
