@@ -27,6 +27,11 @@ The goal is to make it easy and fun to:
 - Use what you already have
 - Discover new nail design ideas tailored to your inventory
 
+## Implementation Instructions
+- Create a fake dataset as a JSON file at `src/data/metrics.json`.
+- The dataset should represent metrics for polishes in the user's collection (for example: polish id, usage count, last used date, favorite flag, and optional notes).
+- Keep the dataset realistic and varied so it can be used for UI demos, sorting, and filtering behavior.
+
 ---
 
 ## Core Features / Design
